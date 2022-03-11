@@ -38,6 +38,8 @@
 </template>
 
 <script>
+import { QSpinnerHourglass } from 'quasar'
+
 export default {
   name: "PageIndex",
   data() {
@@ -64,27 +66,64 @@ export default {
   },
   methods: {
     getLocation() {
+      this.$q.loading.show({
+        spinner: QSpinnerHourglass,
+        spinnerColor: 'indigo-10',
+        spinnerSize: 140,
+        backgroundColor: 'dark',
+        message: 'please wait...',
+        messageColor: 'white'
+      })
       navigator.geolocation.getCurrentPosition((position) => {
-        this.lat = position.coords.latitude;
-        this.lon = position.coords.longitude;
-        this.getWeatherByCoords();
+        this.lat = position.coords.latitude
+        this.lon = position.coords.longitude
+        this.getWeatherByCoords()
       });
     },
     getWeatherByCoords() {
+      this.$q.loading.show({
+        spinner: QSpinnerHourglass,
+        spinnerColor: 'indigo-10',
+        spinnerSize: 140,
+        backgroundColor: 'dark',
+        message: 'please wait...',
+        messageColor: 'white'
+      })
       this.$axios(
         `${this.apiUrl}?lat=${this.lat}&lon=${this.lon}&appid=${this.apiKey}&units=metric`
       ).then((response) => {
       this.weatherData = response.data
-      });
+        this.timer = setTimeout(() => {
+          this.$q.loading.hide()
+          this.timer = void 0
+        }, 100)      });
     },
     getWeatherBySearch() {
+      this.$q.loading.show({
+        spinner: QSpinnerHourglass,
+        spinnerColor: 'indigo-10',
+        spinnerSize: 140,
+        backgroundColor: 'dark',
+        message: 'please wait...',
+        messageColor: 'white'
+      })
       this.$axios(
         `${this.apiUrl}?q=${this.search}&appid=${this.apiKey}&units=metric`
       ).then((response) => {
         this.weatherData = response.data
-      });
+        this.timer = setTimeout(() => {
+          this.$q.loading.hide()
+          this.timer = void 0
+        }, 100)      });
     }
   },
+
+  beforeDestroy () {
+    if (this.timer !== void 0) {
+      clearTimeout(this.timer)
+      this.$q.loading.hide()
+    }
+  }
 };
 </script>
 
