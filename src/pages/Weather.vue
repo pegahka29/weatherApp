@@ -78,7 +78,7 @@ export default {
     refresh (done) {
       setTimeout(() => {
         done()
-        if(this.lat && this.lon){
+        if(this.lat && this.lon && !this.search){
           if(this.$q.platform.is.electron){
             this.$axios.get('https://freegeoip.app/json/').then(response => {
               this.lat = response.data.latitude
@@ -103,12 +103,10 @@ export default {
             });
           }
         }
-        else if(this.search){
-          this.lat= ""
-          this.lon = ""
+        else {
           this.getWeatherBySearch()
         }
-      }, 1000)
+    })
     },
     getLocation() {
       this.$q.loading.show({
