@@ -1,11 +1,16 @@
 <template>
+  <q-pull-to-refresh
+    @refresh="refresh"
+    color="white"
+    bg-color="blue-13"
+    icon="mdi-cloud-sync"
+  >
   <q-page class="flex column bgClass">
     <div class="col q-pt-lg q-px-md">
       <q-input @keyup.enter="getWeatherBySearch" v-model="search" placeholder="search" dark borderless>
         <template v-slot:before>
           <q-icon @click="getLocation" name="my_location" />
         </template>
-        <template v-slot:hint> Field hint </template>
         <template v-slot:append>
           <q-btn round dense flat icon="search" @click="getWeatherBySearch" />
         </template>
@@ -13,6 +18,10 @@
     </div>
     <template v-if="weatherData">
       <div class="col text-white text-center">
+        <div class="text-grey-13 text-weight-light q-my-md">
+          <span class="q-mx-md">Pull Down To Refresh</span>
+          <q-icon left size="1rem" name="mdi-arrow-down" />
+        </div>
         <div class="text-h4 text-weight-light">{{weatherData.name}}</div>
         <div class="text-h6 text-weight-light">{{weatherData.weather[0].main}}</div>
         <div class="text-h1 text-weight-thin q-my-lg relative-position">
@@ -26,7 +35,7 @@
     </template>
     <template v-else>
       <div class="col column text-center text-white">
-        <div class="col text-h2 text-weight-thin">Weather App</div>
+        <div class="col text-h2 text-weight-thin">Weather</div>
         <q-btn class="col" flat @click="getLocation">
           <q-icon left size="3em" name="my_location" />
           <div>Find my location</div>
@@ -35,13 +44,14 @@
     </template>
     <div class="col skyline"></div>
   </q-page>
+  </q-pull-to-refresh>
 </template>
 
 <script>
 import { QSpinnerHourglass } from 'quasar'
 
 export default {
-  name: "PageIndex",
+  name: "Weather",
   data() {
     return {
       search: "",
@@ -49,7 +59,7 @@ export default {
       lat: null,
       lon: null,
       apiUrl: "https://api.openweathermap.org/data/2.5/weather",
-      apiKey: "Your KeyAPI",
+      apiKey: "0c336cf464dd13fd0739d4090fded569",
     };
   },
   computed: {
@@ -65,20 +75,73 @@ export default {
     }
   },
   methods: {
+    refresh (done) {
+      setTimeout(() => {
+        done()
+        if(this.lat && this.lon){
+          if(this.$q.platform.is.electron){
+            this.$axios.get('https://freegeoip.app/json/').then(response => {
+              this.lat = response.data.latitude
+              this.lon = response.data.longitude
+              this.getWeatherByCoords()
+            })
+              .catch(() => {
+                this.$q.loading.hide()
+                this.$q.notify({
+                  color: 'negative',
+                  position: 'bottom',
+                  message: 'Verify your network or type the city name correctly',
+                  icon: 'report_problem'
+                })
+              })
+          }
+          else {
+            navigator.geolocation.getCurrentPosition((position) => {
+              this.lat = position.coords.latitude
+              this.lon = position.coords.longitude
+              this.getWeatherByCoords()
+            });
+          }
+        }
+        else if(this.search){
+          this.lat= ""
+          this.lon = ""
+          this.getWeatherBySearch()
+        }
+      }, 1000)
+    },
     getLocation() {
       this.$q.loading.show({
         spinner: QSpinnerHourglass,
         spinnerColor: 'indigo-10',
         spinnerSize: 140,
         backgroundColor: 'dark',
-        message: 'please wait...',
+        message: 'Please Wait...',
         messageColor: 'white'
       })
-      navigator.geolocation.getCurrentPosition((position) => {
-        this.lat = position.coords.latitude
-        this.lon = position.coords.longitude
-        this.getWeatherByCoords()
-      });
+      if(this.$q.platform.is.electron){
+       this.$axios.get('https://freegeoip.app/json/').then(response => {
+         this.lat = response.data.latitude
+         this.lon = response.data.longitude
+         this.getWeatherByCoords()
+       })
+         .catch(() => {
+           this.$q.loading.hide()
+           this.$q.notify({
+             color: 'negative',
+             position: 'bottom',
+             message: 'Verify your network or type the city name correctly',
+             icon: 'report_problem'
+           })
+         })
+      }
+      else {
+        navigator.geolocation.getCurrentPosition((position) => {
+          this.lat = position.coords.latitude
+          this.lon = position.coords.longitude
+          this.getWeatherByCoords()
+        });
+      }
     },
     getWeatherByCoords() {
       this.$q.loading.show({
@@ -86,7 +149,7 @@ export default {
         spinnerColor: 'indigo-10',
         spinnerSize: 140,
         backgroundColor: 'dark',
-        message: 'please wait...',
+        message: 'Please Wait...',
         messageColor: 'white'
       })
       this.$axios(
@@ -96,7 +159,16 @@ export default {
         this.timer = setTimeout(() => {
           this.$q.loading.hide()
           this.timer = void 0
-        }, 100)      });
+        }, 100)      })
+        .catch(() => {
+          this.$q.loading.hide()
+          this.$q.notify({
+            color: 'negative',
+            position: 'bottom',
+            message: 'Verify your network or type the city name correctly',
+            icon: 'report_problem'
+          })
+        })
     },
     getWeatherBySearch() {
       this.$q.loading.show({
@@ -104,7 +176,7 @@ export default {
         spinnerColor: 'indigo-10',
         spinnerSize: 140,
         backgroundColor: 'dark',
-        message: 'please wait...',
+        message: 'Please Wait...',
         messageColor: 'white'
       })
       this.$axios(
@@ -114,7 +186,17 @@ export default {
         this.timer = setTimeout(() => {
           this.$q.loading.hide()
           this.timer = void 0
-        }, 100)      });
+        }, 100)      })
+        .catch(() => {
+          this.$q.loading.hide()
+          this.$q.notify({
+            color: 'negative',
+            position: 'bottom',
+            message: 'Verify your network or type the city name correctly',
+            icon: 'report_problem'
+          })
+          this.search = ""
+        })
     }
   },
 
