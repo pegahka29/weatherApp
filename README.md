@@ -1,5 +1,11 @@
 # weather app (weather)
 
+• Based on Quasar Framework
+
+• Shows current weather conditions based on your location
+
+• Find the weather status by searching the name of the city
+
 weather app
 
 ## Install the dependencies
